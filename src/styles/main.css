@@ -1,0 +1,37 @@
+.home-page {
+    background-image: url(../assets/images/online-education.png);
+    background-size: cover;
+    /* background-repeat: repeat; */
+    /* background-attachment: fixed; */
+    height: 100vh;
+    padding-top: 0.1px;
+}
+
+.home-header {
+    justify-content: space-between;
+    align-items: center;
+}
+.home-header .h1 {
+    color: #4e4ef8;
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .home-page {
+        background-image: url(../assets/images/online-education-small.png);
+    }
+}
+
+.styles_react-code-input__CRulA input {
+    border-radius: 0px !important;
+    font-family: "Roboto" !important;
+}
+
+.root-features {
+    font-family: Roboto Arial, Helvetica, sans-serif;
+}
+
+.root-features li {
+    margin: 4px auto;
+    letter-spacing: 1px;
+}

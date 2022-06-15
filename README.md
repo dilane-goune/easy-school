@@ -59,4 +59,4 @@
 
 This is the front-end repository. [here](https://github.com/dilane-goune/easy-school-server) is the backend.
 
-![Easy School Home](/mnt/0D0D080C0D0D080C/GOUNE/ProgrammingStuff/React/easy-school-v2/src/assets/images/easy-school-root.png "Easy School Welcome page")
+![Easy School Home](/src/assets/images/easy-school-root.png "Easy School Welcome page")

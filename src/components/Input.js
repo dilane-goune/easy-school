@@ -6,7 +6,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 function Input({
     value,
     type,
-    label,
+    label = "",
     helperText,
     required = false,
     onBlur,

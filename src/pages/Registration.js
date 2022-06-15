@@ -80,10 +80,23 @@ export default function SignUp() {
         fourth: false,
     });
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [showCodeInput, setShowCodeInput] = useState(false);
     const [codeIsValid, setCodeIsValid] = useState(null);
+
+    React.useEffect(() => {
+        fetch("/api/registration-data")
+            .then((res) => res.json())
+            .then((data) => {
+                setSpecializations(data.specializations);
+                setClasses(data.classes);
+            })
+            .catch((e) => {
+                console.log(e.message);
+            });
+        setIsLoading(false);
+    }, []);
 
     // functions
     const handleForm = (key, value) => {
@@ -186,18 +199,17 @@ export default function SignUp() {
     };
 
     const verifyPhoneNumber = () => {
-        if (!window.recaptchaVerifier)
-            window.recaptchaVerifier = new RecaptchaVerifier(
-                "recaptcha-container",
-                {
-                    "size": "invisible",
-                    "callback": (response) => {},
-                    "expired-callback": (e) => {
-                        console.log(e);
-                    },
+        window.recaptchaVerifier = new RecaptchaVerifier(
+            "recaptcha-container",
+            {
+                "size": "invisible",
+                "callback": (response) => {},
+                "expired-callback": (e) => {
+                    console.log(e);
                 },
-                auth
-            );
+            },
+            auth
+        );
 
         setIsAuthenticating(true);
         const appVerifier = window.recaptchaVerifier;
@@ -211,6 +223,11 @@ export default function SignUp() {
                 setShowCodeInput(true);
             })
             .catch((e) => {
+                if (
+                    e.message ===
+                    "reCAPTCHA has already been rendered in this element"
+                )
+                    return window.location.reload();
                 feedBack(
                     "Phone number verification failed. check your internet connection."
                 );
@@ -237,18 +254,6 @@ export default function SignUp() {
                 setIsAuthenticating(false);
             });
     };
-
-    React.useEffect(() => {
-        fetch("/api/registration-data")
-            .then((res) => res.json())
-            .then((data) => {
-                setSpecializations(data.specializations);
-                setClasses(data.classes);
-            })
-            .catch((e) => {
-                console.log(e.message);
-            });
-    }, []);
 
     return (
         <main className="home-page">

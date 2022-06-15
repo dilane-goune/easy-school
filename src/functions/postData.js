@@ -1,6 +1,12 @@
 import extendUserToken from "./extendUserToken";
 
-export default async function fetchData(url = "") {
+export default async function postData({
+    url = "",
+    body,
+    method = "POST",
+    headers = { "Content-Type": "application/json" },
+    getJSON = false,
+}) {
     let jsonToken = sessionStorage.getItem("token");
     let token = JSON.parse(jsonToken);
 
@@ -8,17 +14,23 @@ export default async function fetchData(url = "") {
         let newToken;
 
         let res = await fetch(url, {
+            method,
+            body,
             headers: {
                 authorization: "BEARER " + token,
+                ...headers,
             },
         });
 
         if (res.status === 403) {
-            newToken = await extendUserToken();
+            newToken = extendUserToken();
 
             res = await fetch(url, {
+                method,
+                body,
                 headers: {
                     authorization: "BEARER " + newToken,
+                    ...headers,
                 },
             });
         }
@@ -27,12 +39,18 @@ export default async function fetchData(url = "") {
             window.location.replace("/login");
         }
 
-        if (res.status !== 200) return res.status;
+        if (![200, 201, 204].includes(res.status))
+            return { result: null, newToken, status: res.status };
 
-        const result = await res.json();
-        return result;
+        let result;
+
+        if (getJSON) {
+            result = await res.json();
+        }
+
+        return { result, newToken, status: res.status };
     } catch (e) {
         console.log(e);
-        return undefined;
+        return {};
     }
 }

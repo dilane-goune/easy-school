@@ -30,13 +30,11 @@ function Registrations() {
     const { feedBack } = React.useContext(globalContext);
 
     React.useEffect(() => {
-        fetchData(`/api/admin/registrations?skip=${skip}`, true).then(
-            (data) => {
-                if (data instanceof Array) setStudents(data);
-                else feedBack("Failed to fetch data");
-                setIsLoading(false);
-            }
-        );
+        fetchData(`/api/admin/registrations?skip=${skip}`).then((data) => {
+            if (data instanceof Array) setStudents(data);
+            else feedBack("Failed to fetch data");
+            setIsLoading(false);
+        });
     }, []);
 
     return (

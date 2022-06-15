@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import { io } from "socket.io-client";
+import "./functions/socket.io";
 // user
 import Root from "./pages/Root";
 import Login from "./pages/Login";
@@ -26,11 +26,18 @@ import Exams from "./pages/Exams";
 import NewExam from "./pages/NewExam";
 import Questions from "./pages/Questions";
 import { getNotifications, writeNotifications } from "./functions/notification";
-import OnlineCourse from "./pages/OnlineCourse";
 import socket from "./functions/socket.io";
 import TimeTables from "./pages/TimeTables";
 import NewTimeTable from "./pages/NewTimeTable";
 import WriteExam from "./pages/WriteExam";
+import ExamResult from "./pages/ExamResult";
+import Profile from "./pages/Profile";
+import Announcements from "./pages/Announcements";
+import Specializations from "./pages/admin/Specializations";
+import TeacherOnlineClass from "./pages/TeacherOnlineClass";
+import StudentOnlineClass from "./pages/StudentOnlineClass";
+import GetPasswordRecoveryCode from "./pages/GetPasswordRecoveryCode";
+import ConfirmPasswordRecoveryCode from "./pages/ConfirmPasswordRecoveryCode";
 
 let sessionUser = sessionStorage.getItem("user");
 if (sessionUser) sessionUser = JSON.parse(sessionUser);
@@ -89,18 +96,6 @@ function App() {
             ]);
         };
 
-        if (sessionUser?._id) {
-            socket.emit("user-refresh", {
-                userId: sessionUser._id,
-                classId: sessionUser.classId,
-                isTeacher: sessionUser.isTeacher,
-            });
-        }
-
-        socket.on("connect", () =>
-            console.log(`Client connected: ${socket.id}`)
-        );
-
         socket.on("notifications", addNotifications);
 
         socket.on("exam-start", ({ examName, examId }) => {
@@ -148,8 +143,12 @@ function App() {
                         <Route path="admin/login" element={<Login />}></Route>
 
                         <Route
-                            path="courses/live/"
-                            element={<OnlineCourse />}
+                            path="courses/host-online/:classId"
+                            element={<TeacherOnlineClass />}
+                        ></Route>
+                        <Route
+                            path="courses/online/:classId/:teacherId"
+                            element={<StudentOnlineClass />}
                         ></Route>
 
                         <Route
@@ -177,6 +176,10 @@ function App() {
                                 element={<WriteExam />}
                             ></Route>
                             <Route
+                                path="exams/result/:examId"
+                                element={<ExamResult />}
+                            ></Route>
+                            <Route
                                 path="exams/new-exam/:courseCode/:classId"
                                 element={<NewExam />}
                             ></Route>
@@ -191,6 +194,11 @@ function App() {
                             <Route
                                 path="time-tables/new-time-table"
                                 element={<NewTimeTable />}
+                            ></Route>
+                            <Route path="profile" element={<Profile />}></Route>
+                            <Route
+                                path="announcements"
+                                element={<Announcements />}
                             ></Route>
 
                             {/* admin */}
@@ -218,10 +226,26 @@ function App() {
                                     path="teachers"
                                     element={<AdminTeachers />}
                                 ></Route>
+                                <Route
+                                    path="specializations"
+                                    element={<Specializations />}
+                                ></Route>
+                                <Route
+                                    path="announcements"
+                                    element={<Announcements />}
+                                ></Route>
                             </Route>
                         </Route>
                     </Route>
 
+                    <Route
+                        path="/get-recovery-code/"
+                        element={<GetPasswordRecoveryCode />}
+                    ></Route>
+                    <Route
+                        path="/confirm-recovery-code/:code/"
+                        element={<ConfirmPasswordRecoveryCode />}
+                    ></Route>
                     <Route path="/help" element={<HelpPage />}></Route>
                     <Route path="/about" element={<AboutPage />}></Route>
                     <Route

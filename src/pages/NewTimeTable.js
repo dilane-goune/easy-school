@@ -16,11 +16,12 @@ import fetchData from "../functions/fetchData";
 import dayjs from "dayjs";
 
 const formatedDates = [];
+const currentDate = dayjs().set("day", 1);
 
 for (let i = 0; i < 55; i++) {
     formatedDates.push(
-        `${dayjs().add(i, "week").format("DD MMM YYYY")} - ${dayjs()
-            .add(i + 1, "week")
+        `${currentDate.add(i, "week").format("DD MMM YYYY")} - ${currentDate
+            .add(i + 6, "days")
             .format("DD MMM YYYY")}`
     );
 }
@@ -164,7 +165,7 @@ export default function NewTimeTable() {
                         authorization: "BEARER " + newToken,
                     },
                 });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
+                dispatchApp({ type: "SET_TOKEN", token: newToken });
             }
 
             if (res.status === 500) {
@@ -257,7 +258,7 @@ export default function NewTimeTable() {
                     sx={{ borderRadius: "20px" }}
                     onClick={handleNewRow}
                 >
-                    ADD
+                    SET
                 </Button>
             </Box>
             <TimeTableView program={programState} />
@@ -305,9 +306,3 @@ export default function NewTimeTable() {
         </div>
     );
 }
-
-// import React from "react";
-
-// export default function NewTimeTable() {
-//     return <div>NewTimeTable</div>;
-// }

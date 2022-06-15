@@ -33,62 +33,31 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import HelpIcon from "@mui/icons-material/Help";
-import InfoIcon from "@mui/icons-material/Info";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
 import { Outlet, useNavigate } from "react-router-dom";
 import globalContext from "../context/globalContext";
-import useIsAdmin from "../functions/useIsAdmin";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
-const userDrawerOptions = [
+const drawerOptions = [
     {
         label: "Home",
         icon: <HomeIcon />,
         link: "/home",
     },
     {
-        label: "My account",
+        label: "Profile",
         icon: <PersonIcon />,
-        link: "/user/profile",
+        link: "/profile",
         divider: true,
     },
     {
-        label: "Courses",
+        label: "My Courses",
         link: "/courses",
     },
     {
         label: "Exams",
         link: "/exams",
-    },
-    {
-        label: "Payments",
-        link: "/payments",
-    },
-    {
-        label: "Help",
-        link: "/help",
-        icon: <HelpIcon />,
-    },
-    {
-        label: "About",
-        link: "/about",
-        icon: <InfoIcon />,
-        divider: true,
-    },
-];
-
-const adminDrawerOptions = [
-    {
-        label: "Home",
-        icon: <HomeIcon />,
-        link: "/admin/home",
-    },
-    {
-        label: "My account",
-        icon: <PersonIcon />,
-        link: "/admin/profile",
-        divider: true,
     },
     {
         label: "Registrations",
@@ -107,10 +76,6 @@ const adminDrawerOptions = [
         label: "Classes",
         link: "/admin/classes",
     },
-    {
-        label: "Academic Classes",
-        link: "/admin/academic-classes",
-    },
 ];
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -124,9 +89,6 @@ const NavBar = () => {
         dispatchApp,
         notifications,
     } = React.useContext(globalContext);
-
-    const isAdmin = useIsAdmin();
-    const drawerOptions = isAdmin ? adminDrawerOptions : userDrawerOptions;
 
     // state
     const [anchorElUser, setAnchorElUser] = useState(null);
@@ -257,12 +219,10 @@ const NavBar = () => {
                                     sx={{ p: 0 }}
                                 >
                                     <Avatar
-                                        alt={
-                                            isAdmin ? user.userName : user.name
-                                        }
+                                        alt={user.name}
                                         src={
                                             user?.pp
-                                                ? "/api/profile-pictutres/" +
+                                                ? "/api/profile-pictures/" +
                                                   user.pp
                                                 : null
                                         }
@@ -334,16 +294,14 @@ const NavBar = () => {
                     direction="row"
                 >
                     <Avatar
-                        alt={isAdmin ? user.userName : user.name}
+                        alt={user.name}
                         src={
-                            user?.pp
-                                ? "/api/profile-pictutres/" + user.pp
-                                : null
+                            user?.pp ? "/api/profile-pictures/" + user.pp : null
                         }
                         sx={{ width: 56, height: 56, ml: 1 }}
                     />
                     <Typography variant="h6" sm={{ m: 0 }}>
-                        {isAdmin ? user.userName : user.name}
+                        {user.name}
                     </Typography>
                 </Stack>
                 <Box
@@ -369,8 +327,15 @@ const NavBar = () => {
                                     }}
                                 >
                                     <ListItemIcon>
-                                        {opt.icon || <ArrowForwardIosIcon />}
+                                        {opt.link.startsWith("/admin") ? (
+                                            <AdminPanelSettingsIcon
+                                                sx={{ color: "primary.main" }}
+                                            />
+                                        ) : (
+                                            opt.icon || <ArrowForwardIosIcon />
+                                        )}
                                     </ListItemIcon>
+
                                     <ListItemText primary={opt.label} />
                                 </ListItemButton>
                                 {opt.divider && <Divider />}
@@ -406,9 +371,7 @@ const NavBar = () => {
                             dispatchApp({ type: "SET_USER", user: {} });
                             dispatchApp({ type: "SET_TOKEN", token: null });
 
-                            navigate(isAdmin ? "/admin/login" : "/", {
-                                replace: true,
-                            });
+                            navigate("/", { replace: true });
                         }}
                     >
                         Yes

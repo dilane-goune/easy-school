@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Avatar, Typography, Divider } from "@mui/material";
 
 function ChatMessage(props) {
-    const { isMe = false, profile, userName, message, time } = props;
+    const { isMe = false, pp, userName, message, time } = props;
     return (
         <Box
             sx={{
@@ -14,7 +14,7 @@ function ChatMessage(props) {
         >
             <Avatar
                 alt={userName}
-                src={profile}
+                src={"/api/profile-pictures/" + pp}
                 sx={{ width: 24, height: 24 }}
             />
             <Box

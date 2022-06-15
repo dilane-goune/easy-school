@@ -4,6 +4,17 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import MUISelect from "@mui/material/Select";
 import Box from "@mui/material/Box";
+import PropTypes from "prop-types";
+
+Select.propTypes = {
+    options: PropTypes.array,
+    value: PropTypes.any,
+    onChange: PropTypes.func.isRequired,
+    label: PropTypes.string.isRequired,
+    variant: PropTypes.string,
+    disabled: PropTypes.bool,
+    square: PropTypes.bool,
+};
 
 export default function Select({
     options = [],
@@ -14,10 +25,18 @@ export default function Select({
     variant = "outlined",
     square = false,
     disabled = false,
+    returnOpt = false,
     ...rest
 }) {
     const handleChange = (event) => {
-        if (onChange instanceof Function) onChange(event.target.value);
+        if (returnOpt) {
+            const opt = options.find(
+                (opt) =>
+                    opt.value === event.target.value ||
+                    opt === event.target.value
+            );
+            onChange(opt);
+        } else onChange(event.target.value);
     };
 
     return (

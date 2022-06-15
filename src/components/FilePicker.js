@@ -13,7 +13,9 @@ export default function FilePicker({
     required = false,
     accept,
     multiple = false,
+    hidden = false,
     helperText,
+    inputRef,
     sx = {},
 }) {
     const handleChange = (e) => {
@@ -27,15 +29,18 @@ export default function FilePicker({
                 required={required}
                 fullWidth
                 variant="standard"
+                hiddenLabel={hidden}
             >
                 <InputLabel htmlFor="component-error">{label}</InputLabel>
                 <Input
+                    hidden={hidden}
+                    ref={inputRef}
                     accept={accept}
                     fullWidth
                     type="file"
                     id="component-error"
                     onChange={handleChange}
-                    inputProps={{ accept }}
+                    inputProps={{ accept, multiple }}
                 />
                 <FormHelperText>{helperText}</FormHelperText>
             </FormControl>

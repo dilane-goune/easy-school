@@ -8,6 +8,7 @@ function Label({ label = "", value }) {
             sx={{
                 display: "flex",
                 padding: "5px 20px",
+                alignItems: "center",
             }}
         >
             <Typography width="40%">{label}</Typography>

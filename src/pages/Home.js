@@ -1,131 +1,77 @@
 import React from "react";
-import {
-    Container,
-    Typography,
-    Grid,
-    Box,
-    Autocomplete,
-    TextField,
-} from "@mui/material";
+import { Container, Typography, Grid, Box } from "@mui/material";
 import HomeCard from "../components/HomeCard";
-import useIsAdmin from "../functions/useIsAdmin";
 import globalContext from "../context/globalContext";
 
-const studentHomeOptions = [
-    { link: "user-profile", label: "Profile" },
+const homeOptions = [
     {
-        link: "/courses",
-        label: "Courses",
-        image: require("../assets/images/courses.jpg"),
+        "link": "/profile",
+        "label": "Profile",
+        "image": require("../assets/images/profile-picture.png"),
     },
     {
-        link: "/exams",
-        label: "Exams",
-        image: require("../assets/images/exams.jpg"),
+        "link": "/courses",
+        "label": "My Courses",
+        "image": require("../assets/images/courses.jpg"),
     },
     {
-        link: "/teachers",
-        label: "Teachers",
-        image: require("../assets/images/teachers.jpg"),
+        "link": "/questions",
+        "label": "Questions",
+        "image": require("../assets/images/questions.jpg"),
     },
     {
-        link: "/courses/live",
-        label: "Live Classes",
-        image: require("../assets/images/live.jpg"),
+        "link": "/exams",
+        "label": "Exams",
+        "image": require("../assets/images/exams.jpg"),
     },
     {
-        link: "/time-tables",
-        label: "Time Table",
-        image: require("../assets/images/time-table.webp"),
+        "link": "/time-tables",
+        "label": "Time Table",
+        "image": require("../assets/images/time-table.webp"),
     },
     {
-        link: "/payments",
-        label: "Payments",
-        image: require("../assets/images/payments.jpg"),
-    },
-];
-const teacherHomeOptions = [
-    { link: "user-profile", label: "Profile" },
-    {
-        link: "/courses",
-        label: "Courses",
-        image: require("../assets/images/courses.jpg"),
+        "link": "/announcements",
+        "label": "Announcements",
+        "image": require("../assets/images/announcement.jpg"),
     },
     {
-        link: "/questions",
-        label: "Questions",
-        image: require("../assets/images/questions.jpg"),
+        "link": "/admin/registrations",
+        "label": "Registrations",
+        "image": require("../assets/images/registrations.jpg"),
+        "isAdmin": true,
     },
     {
-        link: "/exams",
-        label: "Exams",
-        image: require("../assets/images/exams.jpg"),
-    },
-
-    {
-        link: "/courses/live",
-        label: "Live Classes",
-        image: require("../assets/images/live.jpg"),
+        "link": "/admin/courses",
+        "label": "Courses",
+        "image": require("../assets/images/courses.jpg"),
+        "isAdmin": true,
     },
     {
-        link: "/time-tables",
-        label: "Time Table",
-        image: require("../assets/images/time-table.webp"),
+        "link": "/admin/classes",
+        "label": "Classes",
+        "image": require("../assets/images/classes.png"),
+        "isAdmin": true,
     },
     {
-        link: "/payments",
-        label: "Payments",
-        image: require("../assets/images/payments.jpg"),
-    },
-];
-
-const adminHomeOptions = [
-    { link: "/admin/profile", label: "Profile" },
-    {
-        link: "/admin/registrations",
-        label: "Registrations",
-        image: require("../assets/images/registrations.jpg"),
+        "link": "/admin/teachers",
+        "label": "Teachers",
+        "image": require("../assets/images/teachers.jpg"),
+        "isAdmin": true,
     },
     {
-        link: "/admin/courses",
-        label: "Courses",
-        image: require("../assets/images/courses.jpg"),
-    },
-    {
-        link: "/admin/classes",
-        label: "Classes",
-        image: require("../assets/images/classes.png"),
-    },
-    {
-        link: "/admin/exams",
-        label: "Exams",
-        image: require("../assets/images/exams.jpg"),
-    },
-    {
-        link: "/admin/teachers",
-        label: "Teachers",
-        image: require("../assets/images/teachers.jpg"),
-    },
-
-    {
-        link: "/admin/payments",
-        label: "Payments",
-        image: require("../assets/images/payments.jpg"),
+        "link": "/admin/specializations",
+        "label": "Specializations",
+        "image": require("../assets/images/specializations.jpeg"),
+        "isAdmin": true,
     },
 ];
 
 function Home() {
-    const isAdmin = useIsAdmin();
     const {
         appState: {
-            user: { isTeacher },
+            user: { isAdmin },
         },
     } = React.useContext(globalContext);
-    const homeOptions = isAdmin
-        ? adminHomeOptions
-        : isTeacher
-        ? teacherHomeOptions
-        : studentHomeOptions;
 
     return (
         <Container>
@@ -141,29 +87,31 @@ function Home() {
                     gutterBottom
                     component="div"
                 >
-                    Student User
+                    Home
                 </Typography>
-                <Autocomplete
-                    disablePortal
-                    options={[]}
-                    sx={{ width: 300 }}
-                    renderInput={(params) => (
-                        <TextField {...params} label="Search" />
-                    )}
-                    size="small"
-                    loading
-                />
             </Box>
             <Grid container spacing={2}>
-                {homeOptions.map((img, ind) => (
-                    <Grid item sm={6} xs={12} md={3} xl={4} key={ind}>
-                        <HomeCard
-                            label={img.label}
-                            image={img.image}
-                            link={img.link}
-                        />
-                    </Grid>
-                ))}
+                {isAdmin
+                    ? homeOptions.map((img, ind) => (
+                          <Grid item sm={6} xs={12} md={3} xl={4} key={ind}>
+                              <HomeCard
+                                  label={img.label}
+                                  image={img.image}
+                                  link={img.link}
+                              />
+                          </Grid>
+                      ))
+                    : homeOptions
+                          .filter((opt) => !opt.isAdmin)
+                          .map((img, ind) => (
+                              <Grid item sm={6} xs={12} md={3} xl={4} key={ind}>
+                                  <HomeCard
+                                      label={img.label}
+                                      image={img.image}
+                                      link={img.link}
+                                  />
+                              </Grid>
+                          ))}
             </Grid>
         </Container>
     );

@@ -94,9 +94,13 @@ TablePaginationActions.propTypes = {
     rowsPerPage: PropTypes.number.isRequired,
 };
 
-const MyTableRow = ({ data, number, keys, onClick }) => {
+const MyTableRow = ({ data, number, keys, onClick, selected }) => {
     return (
-        <TableRow>
+        <TableRow
+            sx={{
+                bgcolor: selected && onClick ? "#faf1f1" : "initial",
+            }}
+        >
             {number ? <TableCell>{number}</TableCell> : null}
             {keys.map((k, ind) => {
                 return (
@@ -129,6 +133,8 @@ export default function MyTable({
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
+    const [selectedRow, setSelectedRow] = React.useState();
+
     const emptyRows =
         page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
 
@@ -155,7 +161,15 @@ export default function MyTable({
             >
                 <TableHead>
                     <TableRow>
-                        {numbered ? <TableCell>#</TableCell> : null}
+                        {numbered ? (
+                            <TableCell
+                                sx={{
+                                    width: "20px !important",
+                                }}
+                            >
+                                #
+                            </TableCell>
+                        ) : null}
                         {headData.map(({ label, minWidth, ...rest }, ind) => {
                             return (
                                 <TableCell
@@ -178,7 +192,11 @@ export default function MyTable({
                                     data={l}
                                     number={numbered ? ind + 1 : undefined}
                                     keys={keys}
-                                    onClick={onClick}
+                                    onClick={(opt, e) => {
+                                        setSelectedRow(ind);
+                                        onClick(opt, e);
+                                    }}
+                                    selected={selectedRow === ind}
                                     sx={{ whiteSpace: "nowrap" }}
                                 />
                             );
@@ -205,13 +223,23 @@ export default function MyTable({
                                     data={l}
                                     number={numbered ? ind + 1 : undefined}
                                     keys={keys}
-                                    onClick={onClick}
+                                    onClick={(opt, e) => {
+                                        setSelectedRow(ind);
+                                        onClick(opt, e);
+                                    }}
+                                    selected={selectedRow === ind}
                                 />
                             );
                         })}
 
                         {emptyRows > 0 && (
-                            <TableRow style={{ height: 53 * emptyRows }}>
+                            <TableRow
+                                style={{
+                                    height: small
+                                        ? 33.02 * emptyRows
+                                        : 53.02 * emptyRows,
+                                }}
+                            >
                                 <TableCell colSpan={6} />
                             </TableRow>
                         )}

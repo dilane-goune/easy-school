@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import Label from "../../components/Label";
 import globalContext from "../../context/globalContext";
-import extendAdminToken from "../../functions/extendAdminToken";
+import postData from "../../functions/postData";
 
 function RegistrationStudent() {
     // states
@@ -26,45 +26,19 @@ function RegistrationStudent() {
 
     // functions
 
-    const {
-        feedBack,
-        appState: { token },
-        dispatchApp,
-    } = React.useContext(globalContext);
+    const { feedBack, dispatchApp } = React.useContext(globalContext);
 
     const confirmRegistration = async () => {
         try {
             setIsLoading(true);
 
-            let newToken;
+            const { status, newToken } = await postData({
+                url: `/api/admin/registrations/${studentId}/${student.classId}`,
+                method: "PUT",
+            });
+            newToken && dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-            let res = await fetch(
-                `/api/admin/registrations/${studentId}/${student.classId}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        authorization: "BEARER " + token,
-                    },
-                }
-            );
-
-            if (res.status === 403) {
-                newToken = await extendAdminToken();
-
-                res = await fetch(
-                    `/api/admin/registrations/${studentId}/${student.classId}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            authorization: "BEARER " + newToken,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
-            }
-
-            if (res.status === 404) {
+            if (status === 404) {
                 feedBack(
                     `Student not found. This operation may have 
                     just been done by another admin.`
@@ -72,13 +46,13 @@ function RegistrationStudent() {
                 return;
             }
 
-            if (res.status === 500) {
+            if (status === 500) {
                 feedBack(`Operation failed. This may be due to some temporal server error. 
                 Please try again`);
                 return;
             }
 
-            if (res.status === 201) {
+            if (status === 201) {
                 feedBack("Student confirmed successufully.", "success");
                 sessionStorage.removeItem("registration-student");
             }
@@ -96,42 +70,23 @@ function RegistrationStudent() {
         try {
             setIsLoading(true);
 
-            let newToken;
-
-            let res = await fetch(`/api/admin/registrations/${studentId}`, {
-                method: "DELETE",
-                body: JSON.stringify({ reason }),
-                headers: {
-                    "Content-Type": "application/json",
-                    authorization: "BEARER " + token,
-                },
+            const { status, newToken } = await postData({
+                url: `/api/admin/registrations/${studentId}/${student.classId}`,
+                method: "PUT",
             });
+            newToken && dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-            if (res.status === 403) {
-                newToken = await extendAdminToken();
-
-                res = await fetch(`/api/admin/registrations/${studentId}`, {
-                    method: "DELETE",
-                    body: JSON.stringify({ reason }),
-                    headers: {
-                        "Content-Type": "application/json",
-                        authorization: "BEARER " + newToken,
-                    },
-                });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
-            }
-
-            if (res.status === 400) {
+            if (status === 400) {
                 feedBack("Student is already confirmed.", "warning");
                 return;
             }
-            if (res.status === 401) {
+            if (status === 401) {
                 feedBack(
                     "Unauthorized. you may need to logout and login again"
                 );
                 return;
             }
-            if (res.status === 404) {
+            if (status === 404) {
                 feedBack(
                     "Student not found. This operation may have just been done by another admin.",
                     "warning"
@@ -140,16 +95,15 @@ function RegistrationStudent() {
                 return;
             }
 
-            if (res.status === 500) {
+            if (status === 500) {
                 feedBack(
                     "Operation failed. This may be due to some temporal server error. Please try again"
                 );
                 return;
             }
 
-            if (res.status === 204) {
+            if (status === 204) {
                 feedBack("Student rejected successufully.", "success");
-                sessionStorage.removeItem("registration-student");
             }
         } catch (e) {
             console.log(e);

@@ -23,8 +23,8 @@ import "../../styles/main.css";
 import { emailRegEx, telRegex } from "../../functions/regex";
 import CountrySelect from "../../components/CountryPicker";
 import globalContext from "../../context/globalContext";
-import extendAdminToken from "../../functions/extendAdminToken";
 import fetchData from "../../functions/fetchData";
+import postData from "../../functions/postData";
 
 dayjs.extend(LocalizedFormat);
 
@@ -53,14 +53,10 @@ export default function AdminTeachers() {
 
     const [isLoading, setIsLoading] = useState(true);
 
-    const {
-        feedBack,
-        appState: { token },
-        dispatchApp,
-    } = React.useContext(globalContext);
+    const { feedBack, dispatchApp } = React.useContext(globalContext);
 
     React.useEffect(() => {
-        fetchData("/api/admin/teachers", true).then((data) => {
+        fetchData("/api/admin/teachers").then((data) => {
             if (data instanceof Object) {
                 setTeachers(data.teachers);
                 setSpecializations(data.specializations);
@@ -89,46 +85,29 @@ export default function AdminTeachers() {
     };
 
     const handleNewTeacher = async (e) => {
-        newTeacher.country = newTeacher.country.name;
+        newTeacher.countryCode = newTeacher.country.code;
         try {
             setIsLoading(true);
-            let newToken;
 
-            let res = await fetch("/api/admin/teachers", {
-                method: "POST",
+            const { status, newToken, result } = await postData({
+                url: "/api/admin/teachers",
                 body: JSON.stringify(newTeacher),
-                headers: {
-                    "Content-Type": "application/json",
-                    authorization: "BEARER " + token,
-                },
+                getJSON: true,
             });
+            newToken && dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-            if (res.status === 403) {
-                newToken = await extendAdminToken();
-
-                res = await fetch("/api/admin/teachers", {
-                    method: "POST",
-                    body: JSON.stringify(newTeacher),
-                    headers: {
-                        "Content-Type": "application/json",
-                        authorization: "BEARER " + newToken,
-                    },
-                });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
-            }
-
-            if (res.status === 409) {
+            if (status === 409) {
                 feedBack("A teacher with this email alredy exist.");
                 return;
             }
-            if (res.status === 500) {
+            if (status === 500) {
                 feedBack("Sothing when wrong. Please try again.", "warning");
                 return;
             }
 
             feedBack("Teacher added successfully.", "success");
 
-            const { _id, createdAt } = await res.json();
+            const { _id, createdAt } = result;
 
             setTeachers([...teachers, { ...newTeacher, _id, createdAt }]);
 
@@ -259,7 +238,7 @@ export default function AdminTeachers() {
                                             >
                                                 ,
                                             </em>{" "}
-                                            {currentTeacher.country}
+                                            {currentTeacher.country?.name}
                                         </Typography>
                                     }
                                 />
@@ -269,11 +248,11 @@ export default function AdminTeachers() {
                                     value={currentTeacher.specialization}
                                 />
                                 <Label
-                                    label="Last seen"
+                                    label="Last Login"
                                     value={
-                                        currentTeacher.lastSeen === "M"
+                                        currentTeacher.lastLogin
                                             ? dayjs(
-                                                  currentTeacher.lastSeen
+                                                  currentTeacher.lastLogin
                                               ).format("lll")
                                             : "never"
                                     }

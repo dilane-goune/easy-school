@@ -28,19 +28,18 @@ export default function CompleteRegistration() {
     const { userId } = useParams();
     const navigate = useNavigate();
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     React.useEffect(() => {
         fetch("/api/get-registration-info/" + userId)
             .then((res) => res.json())
             .then((data) => {
-                if (data.message)
-                    navigate("/service-error?message=" + data.message);
                 setStudent(data);
             })
             .catch((e) => {
                 console.log(e.message);
             });
+        setIsLoading(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

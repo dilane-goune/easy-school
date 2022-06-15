@@ -38,7 +38,7 @@ export default function NewExam() {
     // states
 
     const [showNewQuestionDialog, setShowNewQuestionDialog] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [questions, setQuestions] = useState([]);
     // const [teachers, setTeachers] = useState([]);
@@ -46,7 +46,6 @@ export default function NewExam() {
     const [newAnswer, setNewAnswer] = useState({
         correctPoints: 1,
         wrongPoints: 0,
-        required: true,
     });
 
     const [newExam, setNewExam] = useState({
@@ -82,6 +81,7 @@ export default function NewExam() {
                 setQuestions(data.questions);
             } else feedBack("Failed to fetch data");
         });
+        setIsLoading(false);
     }, []);
 
     // functions
@@ -105,7 +105,6 @@ export default function NewExam() {
                 correctPoints: eq.correctPoints,
                 wrongPoints: eq.wrongPoints,
                 questionId: eq.questionId,
-                required: eq.required,
             };
         });
         newExam.courseCode = courseCode;
@@ -140,7 +139,7 @@ export default function NewExam() {
                         authorization: "BEARER " + newToken,
                     },
                 });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
+                dispatchApp({ type: "SET_TOKEN", token: newToken });
             }
 
             if (res.status === 500) {
@@ -149,7 +148,7 @@ export default function NewExam() {
             }
             if (res.status === 400) {
                 feedBack(
-                    "Bad request. make sure each field in the form is correctly filled.",
+                    "Error make sure the exam date is more than 5 minutes from now",
                     "warning"
                 );
                 return;
@@ -226,11 +225,10 @@ export default function NewExam() {
                                 setNewExam({ ...newExam, date: val });
                             else if (
                                 new Date(val).getTime() >
-                                new Date().getTime() + 1000 * 60 * 60
+                                new Date().getTime() + 300000
                             ) {
                                 setNewExam({ ...newExam, date: val });
                             }
-                            setNewExam({ ...newExam, date: val });
                         }}
                         label="Date & time"
                         type="datetime-local"
@@ -338,15 +336,7 @@ export default function NewExam() {
                                                     wrong : {q.wrongPoints}
                                                     <em>pts</em>
                                                 </label>
-                                                <em
-                                                    style={{
-                                                        fontFamily: "Roboto",
-                                                        color: "red",
-                                                        marginRight: "20px",
-                                                    }}
-                                                >
-                                                    {q.required && "required"}
-                                                </em>
+
                                                 <Divider />
                                             </Box>
                                         );
@@ -466,33 +456,6 @@ export default function NewExam() {
                         <label style={{ fontFamily: "Roboto", color: "red" }}>
                             <em>pts</em>
                         </label>
-                    </Box>
-                    <Box
-                        display="inline-flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        sx={{ mx: "40px" }}
-                    >
-                        <label style={{ fontFamily: "Roboto", color: "red" }}>
-                            required
-                        </label>
-                        <input
-                            type="checkbox"
-                            style={{
-                                border: "1px solid red",
-                                width: "40px",
-                                padding: 0,
-                            }}
-                            checked={newAnswer.required}
-                            onChange={(e) => {
-                                const val = e.target.checked;
-
-                                setNewAnswer({
-                                    ...newAnswer,
-                                    required: val,
-                                });
-                            }}
-                        />
                     </Box>
                 </Box>
                 <Divider />

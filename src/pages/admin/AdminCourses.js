@@ -5,6 +5,7 @@ import PageHeader from "../../components/PageHeader";
 import dayjs from "dayjs";
 import LocalizedFormat from "dayjs/plugin/localizedFormat";
 import Table from "../../components/Table";
+import UpdateCourseDialog from "./UpdateCourseDialog";
 import { ReactSortable } from "react-sortablejs";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -21,9 +22,10 @@ import {
 import fetchData from "../../functions/fetchData";
 import Label from "../../components/Label";
 import globalContext from "../../context/globalContext";
-import extendAdminToken from "../../functions/extendAdminToken";
+import postData from "../../functions/postData";
 
 dayjs.extend(LocalizedFormat);
+const COLORS = ["#ed6c02", "#ff9800", "#9c27b0", "#2e7d32", "#01579b"];
 
 export default function AdminCourses() {
     // states
@@ -41,9 +43,10 @@ export default function AdminCourses() {
     const [newChapter, setNewChapter] = useState("");
 
     const [isLoading, setIsLoading] = useState(true);
+    const [showUpdateCourseModal, setShowUpdateCouseModal] = useState(false);
 
     React.useEffect(() => {
-        fetchData("/api/admin/courses", true).then((data) => {
+        fetchData("/api/admin/courses").then((data) => {
             if (data instanceof Array) {
                 setCourses(data);
                 if (!data?.length) setSelectedOption(2);
@@ -54,46 +57,31 @@ export default function AdminCourses() {
     }, []);
 
     // functions
-    const {
-        feedBack,
-        appState: { token },
-        dispatchApp,
-    } = React.useContext(globalContext);
+    const { feedBack, dispatchApp } = React.useContext(globalContext);
 
     const handleNewCouse = async (e) => {
         const finalChapters = courseChapters.map((c) => c.name);
-        const finalCourse = { ...newCourse, chapters: finalChapters };
+        const finalCourse = {
+            ...newCourse,
+            chapters: finalChapters,
+            color: COLORS[Math.round(Math.random() * 10) % COLORS.length],
+        };
 
         try {
             setIsLoading(true);
-            let newToken;
-            let res = await fetch("/api/admin/courses", {
+
+            const { status, newToken } = await postData({
+                url: "/api/admin/courses",
                 method: "POST",
                 body: JSON.stringify(finalCourse),
-                headers: {
-                    "Content-Type": "application/json",
-                    authorization: "BEARER " + token,
-                },
             });
-            if (res.status === 403) {
-                newToken = await extendAdminToken();
-                dispatchApp({ type: "SET_TOKEN", token: newToken });
+            newToken && dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-                res = await fetch("/api/admin/courses", {
-                    method: "POST",
-                    body: JSON.stringify(finalCourse),
-                    headers: {
-                        "Content-Type": "application/json",
-                        authorization: "BEARER " + newToken,
-                    },
-                });
-            }
-
-            if (res.status === 409) {
+            if (status === 409) {
                 feedBack("There is already a course with this code.");
                 return;
             }
-            if (res.status === 201) {
+            if (status === 201) {
                 feedBack("Course added successfully.", "success");
 
                 setCourses([...courses, finalCourse]);
@@ -116,6 +104,37 @@ export default function AdminCourses() {
         }
     };
 
+    const handleUpdateCourseCourses = async (course) => {
+        setIsLoading(true);
+        const { status } = await postData({
+            url: "/api/admin/courses",
+            method: "PUT",
+            body: JSON.stringify({
+                ...course,
+                chapters: course.chapters.map((c) => c.name),
+            }),
+        });
+        if (status === 200) {
+            feedBack("Course added successfully.", "success");
+            setCourses(
+                courses.map((c) => {
+                    if (c.courseCode === course.courseCode)
+                        return {
+                            ...c,
+                            chapters: course.chapters.map((c) => c.name),
+                        };
+                    return c;
+                })
+            );
+            setCurrentCouse({
+                ...currentCourse,
+                chapters: course.chapters.map((c) => c.name),
+            });
+            setShowUpdateCouseModal(false);
+        } else feedBack("Sothing when wrong. Please try again.");
+        setIsLoading(false);
+    };
+
     return (
         <Container>
             <PageHeader title="Courses" noSearch />
@@ -136,7 +155,6 @@ export default function AdminCourses() {
                             setCurrentCouse(data);
                         }}
                         asPage
-
                         // small
                     />
                 </Grid>
@@ -179,51 +197,58 @@ export default function AdminCourses() {
                     {selectedOption === 1 ? (
                         currentCourse ? (
                             <Paper sx={{ p: "10px", mt: "10px" }}>
-                                <React.Fragment>
-                                    <Box>
-                                        <Typography variant="h6">
-                                            Properties
-                                        </Typography>
-                                        <Button>Edit</Button>
-                                    </Box>
-                                    <Label
-                                        label="Name"
-                                        value={currentCourse.name}
-                                    />
-                                    <Label
-                                        label="Code"
-                                        value={currentCourse.courseCode}
-                                    />
-                                    <Label
-                                        label="Level"
-                                        value={currentCourse.level}
-                                    />
-                                    <Label
-                                        label="Date added"
-                                        value={dayjs(
-                                            currentCourse.createdAt
-                                        ).format("lll")}
-                                    />
-
-                                    <Divider />
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
                                     <Typography variant="h6">
-                                        Chapters
+                                        Properties
                                     </Typography>
-                                    <Box padding="0 20px">
-                                        <Table
-                                            data={currentCourse.chapters.map(
-                                                (chap) => {
-                                                    return { name: chap };
-                                                }
-                                            )}
-                                            headData={[
-                                                { label: "Name", key: "name" },
-                                            ]}
-                                            numbered
-                                            small
-                                        />
-                                    </Box>
-                                </React.Fragment>
+                                    <Button
+                                        onClick={() =>
+                                            setShowUpdateCouseModal(true)
+                                        }
+                                    >
+                                        Edit
+                                    </Button>
+                                </Box>
+                                <Label
+                                    label="Name"
+                                    value={currentCourse.name}
+                                />
+                                <Label
+                                    label="Code"
+                                    value={currentCourse.courseCode}
+                                />
+                                <Label
+                                    label="Level"
+                                    value={currentCourse.level}
+                                />
+                                <Label
+                                    label="Date added"
+                                    value={dayjs(
+                                        currentCourse.createdAt
+                                    ).format("lll")}
+                                />
+
+                                <Divider />
+                                <Typography variant="h6">Chapters</Typography>
+                                <Box padding="0 20px">
+                                    <Table
+                                        data={currentCourse.chapters.map(
+                                            (chap) => {
+                                                return { name: chap };
+                                            }
+                                        )}
+                                        headData={[
+                                            { label: "Name", key: "name" },
+                                        ]}
+                                        numbered
+                                        small
+                                    />
+                                </Box>
                             </Paper>
                         ) : (
                             <Typography
@@ -393,6 +418,15 @@ export default function AdminCourses() {
             >
                 <CircularProgress color="inherit" />
             </Backdrop>
+
+            {showUpdateCourseModal && currentCourse && (
+                <UpdateCourseDialog
+                    open
+                    onClose={() => setShowUpdateCouseModal(false)}
+                    originalCourse={currentCourse}
+                    onSave={handleUpdateCourseCourses}
+                />
+            )}
         </Container>
     );
 }

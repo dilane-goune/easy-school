@@ -52,41 +52,53 @@ const QuestionItem = ({
     );
 };
 
-const Timer = ({ initialTime = 0, onTimeFinish = () => {} }) => {
-    const [time, setTime] = useState(initialTime);
+const timeGenerator = (time) => {
+    const hours = "" + parseInt(time / 3600000);
 
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            if (time > 0) setTime((seconds) => seconds - 1000 * 60);
-            else {
-                onTimeFinish();
-                clearInterval(interval);
-            }
-        }, 1000 * 60);
-        return () => clearInterval(interval);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [time]);
+    let remenderHrs = time / 3600000 - hours;
+    const minutes = `${parseInt(remenderHrs * 60)}`.padStart(2, "0");
 
-    const toHours = (val) => val / 1000 / 60 / 60;
+    const renderMins = remenderHrs * 60 - minutes;
 
+    const seconds = `${parseInt(renderMins * 60)}`.padStart(2, "0");
     return (
-        <Typography>
-            Time Left :{" "}
-            <span style={{ color: "green" }}>
-                {parseInt(toHours(time))}h :{" "}
-                {`${parseInt((toHours(time) * 60) % 60)}`.padStart(2, 0)}min
-            </span>
+        <Typography
+            variant="h6"
+            sx={{ color: minutes <= 20 ? "error.main" : "success.main" }}
+        >
+            Time Left : <strong>{hours} </strong> hrs{" "}
+            <strong>{minutes} </strong> min <strong>{seconds} </strong> sec
         </Typography>
     );
 };
 
+const Timer = ({ initialTime = 0, onTimeFinish = () => {} }) => {
+    const [time, setTime] = useState(initialTime > 0 ? initialTime : 0);
+
+    React.useEffect(() => {
+        if (initialTime > 1) {
+            const interval = setInterval(() => {
+                if (time > 0) setTime((seconds) => seconds - 1000);
+                else {
+                    onTimeFinish();
+                    clearInterval(interval);
+                }
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [time]);
+
+    return timeGenerator(time);
+};
+
 export default function WriteExam() {
     const [isLoading, setIsLoading] = useState(true);
-    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [result, setResult] = useState(null);
 
     const [questions, setQuestions] = useState([]);
     const [exam, setExam] = useState({});
-    const [timing, setTiming] = useState(1);
+    const [timing, setTiming] = useState(0);
 
     const [error, setError] = useState({ status: false, message: "" });
 
@@ -192,7 +204,7 @@ export default function WriteExam() {
                         authorization: "BEARER " + newToken,
                     },
                 });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
+                dispatchApp({ type: "SET_TOKEN", token: newToken });
             }
 
             if (res.status === 500) {
@@ -201,6 +213,10 @@ export default function WriteExam() {
             }
 
             if (res.status === 406) {
+                setError({
+                    status: true,
+                    message: "Your are too late.",
+                });
                 feedBack("Too late");
                 return;
             }
@@ -209,11 +225,9 @@ export default function WriteExam() {
                 return;
             }
             if (res.status === 201) {
-                feedBack(
-                    "Exam saved successfully. You're results will be available in few minutes",
-                    "success"
-                );
-                setFormSubmitted(true);
+                const data = await res.json();
+                setResult(data);
+
                 return true;
             } else {
                 feedBack("Sothing when wrong. Please try submittig again.");
@@ -244,23 +258,51 @@ export default function WriteExam() {
             </Box>
         );
 
+    if (result)
+        return (
+            <Box>
+                <Typography sx={{ textAlign: "center" }} variant="h4">
+                    Exam terminated. You got {result.mark} / {result.total}
+                </Typography>
+            </Box>
+        );
+
     return (
         <Box
             sx={{
                 px: { xs: "10px", md: "20px" },
-                height: "calc(100vh - 50px)",
             }}
         >
             <Box
                 sx={{
                     display: "flex",
                     justifyContent: "space-between",
+                    position: "sticky",
+                    top: "50px",
+                    bgcolor: "#fff",
+                    zIndex: 500,
                 }}
             >
                 <Typography variant="h6">{exam.name}</Typography>
                 <Timer initialTime={timing} onTimeFinish={handleSubmitExam} />
             </Box>
-            <Box sx={{ height: "calc(100% - 75px)", overflowY: "auto" }}>
+            <Box>
+                <Alert sx={{ py: "0" }} severity="warning">
+                    <Typography>
+                        <strong>D</strong>onot refresh, else you will loss you
+                        progress.
+                    </Typography>
+                    <Typography>
+                        <strong>T</strong>he exam will be submitted only once
+                        and this is done automatically as time elapses.
+                    </Typography>
+                    <Typography>
+                        <strong>M</strong>ake sure you check your work before
+                        submitting.
+                    </Typography>
+                </Alert>
+            </Box>
+            <Box sx={{ mt: "10px" }}>
                 {questions.map((q, index) => {
                     return (
                         <QuestionItem
@@ -274,6 +316,7 @@ export default function WriteExam() {
                     );
                 })}
             </Box>
+
             <Box
                 sx={{
                     display: "flex",
@@ -284,24 +327,9 @@ export default function WriteExam() {
                     },
                 }}
             >
-                <Box>
-                    <Alert sx={{ py: "0" }} severity="warning">
-                        <Typography>
-                            <strong>D</strong>onot refresh, else you will loss
-                            you progress.
-                        </Typography>
-                        <Typography>
-                            <strong>T</strong>he exam will be submitted only
-                            once and this is done automatically as time elapses.
-                        </Typography>
-                        <Typography>
-                            <strong>M</strong>ake sure you check your work
-                            before submitting.
-                        </Typography>
-                    </Alert>
-                </Box>
+                <Box></Box>
                 <Button
-                    disabled={formSubmitted}
+                    disabled={!result === null}
                     sx={{ borderRadius: "20px", elevation: 5 }}
                     variant="contained"
                     size="small"

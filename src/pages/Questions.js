@@ -29,9 +29,9 @@ import MyDialog from "../components/MyDialog";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Input from "../components/Input";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import extendUserToken from "../functions/extendUserToken";
 import globalContext from "../context/globalContext";
 import fetchData from "../functions/fetchData";
+import postData from "../functions/postData";
 
 export default function Questions() {
     const USER = JSON.parse(sessionStorage.getItem("user"));
@@ -66,7 +66,7 @@ export default function Questions() {
     const {
         feedBack,
         dispatchApp,
-        appState: { token, user },
+        appState: { user },
     } = React.useContext(globalContext);
 
     const handleNewQuestion = async (e) => {
@@ -74,57 +74,41 @@ export default function Questions() {
 
         try {
             setIsLoading(true);
-            let newToken;
-            let res = await fetch("/api/questions", {
+            const { status, result, newToken } = await postData({
+                url: "/api/questions",
                 method: "POST",
                 body: JSON.stringify(newQuestion),
-                headers: {
-                    "Content-Type": "application/json",
-                    authorization: "BEARER " + token,
-                },
+                getJSON: true,
             });
+            if (newToken) dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-            if (res.status === 403) {
-                newToken = await extendUserToken();
-
-                res = await fetch("/api/questions", {
-                    method: "POST",
-                    body: JSON.stringify(newQuestion),
-                    headers: {
-                        "Content-Type": "application/json",
-                        authorization: "BEARER " + newToken,
-                    },
-                });
-                dispatchApp({ action: "SET_TOKEN", token: newToken });
-            }
-
-            if (res.status === 500) {
+            if (status === 500) {
                 feedBack("Sothing when wrong. Please try again.");
                 return;
             }
-            if (res.status === 400) {
+            if (status === 400) {
                 feedBack(
                     "Bad request. make sure each question has arleast one answer"
                 );
                 return;
             }
+            if (status === 201) {
+                feedBack("Question added successfully.", "success");
 
-            feedBack("Question added successfully.", "success");
+                newQuestion.teacherId = USER?._id;
 
-            newQuestion.teacherId = USER?._id;
+                newQuestion._id = result._id;
 
-            const { _id } = await res.json();
-            newQuestion._id = _id;
+                setQuestions([newQuestion, ...questions]);
 
-            setQuestions([...questions, newQuestion]);
-
-            setNewQuestion({
-                question: "",
-                variant: "checkBox",
-                courseCode: "",
-                answers: [],
-                private: false,
-            });
+                setNewQuestion({
+                    question: "",
+                    variant: "checkBox",
+                    courseCode: "",
+                    answers: [],
+                    private: false,
+                });
+            }
         } catch (e) {
             setIsLoading(false);
             feedBack("Sothing when wrong. Please try again.");
@@ -139,38 +123,24 @@ export default function Questions() {
             try {
                 setIsLoading(true);
 
-                let newToken;
-                let res = await fetch("/api/questions/" + questionId, {
+                const { status, newToken } = await postData({
+                    url: "/api/questions/" + questionId,
                     method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        authorization: "BEARER " + token,
-                    },
                 });
+                if (newToken)
+                    dispatchApp({ type: "SET_TOKEN", token: newToken });
 
-                if (res.status === 403) {
-                    newToken = await extendUserToken();
-
-                    res = await fetch("/api/questions/" + questionId, {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            authorization: "BEARER " + newToken,
-                        },
-                    });
-                }
-
-                if (res.status === 500) {
+                if (status === 500) {
                     feedBack("Sothing when wrong. Please try again.");
                     return;
                 }
 
-                if (res.status === 401) {
+                if (status === 401) {
                     feedBack("Unauthorised");
                     return;
                 }
 
-                if (res.status === 204) {
+                if (status === 204) {
                     feedBack("Question Deleted", "info");
                     setQuestions(questions.filter((q) => q._id !== questionId));
                     return;

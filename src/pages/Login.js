@@ -12,33 +12,28 @@ import { emailRegEx } from "../functions/regex";
 import { Link, useNavigate } from "react-router-dom";
 import LoginIcon from "@mui/icons-material/Login";
 import Input from "../components/Input";
-import useIsAdmin from "../functions/useIsAdmin";
+import socket from "../functions/socket.io";
 import globalContext from "../context/globalContext";
 
 export default function Login() {
     // state
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [userName, setUserName] = useState("");
     // const [rememberMe, setRememberMe] = useState(true);
 
     const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
-    const isAdmin = useIsAdmin();
 
     // functions
-    const { feedBack, dispatchApp, socketRef } =
-        React.useContext(globalContext);
+    const { feedBack, dispatchApp } = React.useContext(globalContext);
 
     async function handleLogin() {
         try {
             setIsLoading(true);
-            const body = { password };
-            if (isAdmin) body.userName = userName;
-            else body.email = email;
+            const body = { password, email };
 
-            let res = await fetch(isAdmin ? "/api/admin/login" : "/api/login", {
+            let res = await fetch("/api/login", {
                 method: "POST",
                 body: JSON.stringify(body),
                 headers: { "Content-Type": "application/json" },
@@ -51,13 +46,9 @@ export default function Login() {
                 feedBack("Account suspended");
                 return;
             } else if (res.status === 403) {
-                feedBack(
-                    isAdmin
-                        ? "Unauthorised"
-                        : `There is no user with this email in the system.
+                feedBack(`There is no user with this email in the system.
                 If you have registered. We will send you a confirmation mail
-                before you can login.`
-                );
+                before you can login.`);
                 return;
             } else if (res.status === 500) {
                 feedBack("Sothing when wrong.");
@@ -77,22 +68,19 @@ export default function Login() {
             } else if (res.status === 200) {
                 const { user, token } = await res.json();
 
-                !isAdmin &&
-                    socketRef.current.emit("user-login", {
+                user.classId &&
+                    socket.emit("user-login", {
                         userId: user._id,
                         classId: user.classId,
                         isTeacher: user.isTeacher,
                     });
-                sessionStorage.setItem(
-                    "user",
-                    JSON.stringify({ ...user, isAdmin })
-                );
+                sessionStorage.setItem("user", JSON.stringify(user));
                 sessionStorage.setItem("token", JSON.stringify(token));
 
-                dispatchApp({ type: "SET_USER", user: { ...user, isAdmin } });
+                dispatchApp({ type: "SET_USER", user });
                 dispatchApp({ type: "SET_TOKEN", token });
 
-                navigate(isAdmin ? "/admin/home" : "/home", { replace: true });
+                navigate("/home", { replace: true });
             } else feedBack("Sothing when wrong. you are probably offline.");
         } catch (e) {
             console.log(e);
@@ -113,7 +101,7 @@ export default function Login() {
                     mb="20px"
                     sx={{ py: { md: 2 }, textAlign: "center" }}
                 >
-                    {isAdmin ? "Login as Admin" : "Login"}
+                    Login
                 </Typography>
                 <Paper
                     elevation={2}
@@ -134,26 +122,15 @@ export default function Login() {
                             "& > :not(style)": { my: 2 },
                         }}
                     >
-                        {isAdmin ? (
-                            <Input
-                                label="Username"
-                                value={userName}
-                                onChange={(val) => setUserName(val)}
-                                required
-                                variant="standard"
-                            />
-                        ) : (
-                            <Input
-                                error={!emailRegEx.test(email) && email !== ""}
-                                label="Email"
-                                value={email}
-                                onChange={(val) => setEmail(val)}
-                                required
-                                variant="standard"
-                            />
-                        )}
+                        <Input
+                            error={!emailRegEx.test(email) && email !== ""}
+                            label="Email"
+                            value={email}
+                            onChange={(val) => setEmail(val)}
+                            required
+                            variant="standard"
+                        />
 
-                        {/* <br /> */}
                         <Input
                             label="Password"
                             value={password}
@@ -171,11 +148,9 @@ export default function Login() {
                             <Box></Box>
                             <Button
                                 disabled={
-                                    isAdmin
-                                        ? !userName || !password || isLoading
-                                        : !emailRegEx.test(email) ||
-                                          !password ||
-                                          isLoading
+                                    !emailRegEx.test(email) ||
+                                    !password ||
+                                    isLoading
                                 }
                                 // variant="outlined"
                                 startIcon={
@@ -191,26 +166,14 @@ export default function Login() {
                             </Button>
                         </Box>
 
-                        {!isAdmin && (
-                            <React.Fragment>
-                                <Typography
-                                    variant="body1"
-                                    color="text.secondary"
-                                >
-                                    Don't have an account ? register{" "}
-                                    <Link to="/registration">here</Link>
-                                </Typography>
-                                <Typography
-                                    variant="body1"
-                                    color="text.secondary"
-                                >
-                                    Forgot password ? recover{" "}
-                                    <Link to="/get-recovery-code/student">
-                                        here
-                                    </Link>
-                                </Typography>
-                            </React.Fragment>
-                        )}
+                        <Typography variant="body1" color="text.secondary">
+                            Don't have an account ? register{" "}
+                            <Link to="/registration">here</Link>
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Forgot password ? recover{" "}
+                            <Link to="/get-recovery-code/">here</Link>
+                        </Typography>
                     </Box>
                 </Paper>
             </Container>

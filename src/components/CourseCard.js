@@ -79,8 +79,10 @@ export default function CourseCard({
                         px: "10px",
                     }}
                 >
-                    <Typography variant="subtitle1">{className}</Typography>
-                    <Typography>{year}</Typography>
+                    <Typography sx={{ my: "auto" }} variant="subtitle1">
+                        {className}
+                    </Typography>
+                    <Typography sx={{ my: "auto" }}>{year}</Typography>
                 </Box>
             </CardActionArea>
         </Card>
